@@ -1,0 +1,39 @@
+name: Test
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+      - run: npm run check
+      - run: npm test
+      - name: Generate notes with the root Action
+        id: notes
+        uses: ./
+        with:
+          mode: notes
+          notes-path: ${{ runner.temp }}/drelease-smoke.md
+      - name: Verify Action outputs
+        env:
+          NOTES_PATH: ${{ steps.notes.outputs.notes-path }}
+          TARGET_SHA: ${{ steps.notes.outputs.target-sha }}
+        run: |
+          node <<'JS'
+          const assert = require("node:assert/strict");
+          const fs = require("node:fs");
+          assert.equal(process.env.TARGET_SHA, process.env.GITHUB_SHA);
+          assert.match(fs.readFileSync(process.env.NOTES_PATH, "utf8"), /AUTO-DEVMD:START/);
+          JS

@@ -1,0 +1,85 @@
+name: DRelease
+description: Publish a nightly prerelease with commits since the latest version tag.
+author: GEMC Collaboration
+
+branding:
+  color: orange
+  icon: tag
+
+inputs:
+  mode:
+    description: "Operation to perform: release or notes (offline preview)."
+    required: false
+    default: release
+  working-directory:
+    description: Checked-out repository with full history and tags.
+    required: false
+    default: .
+  token:
+    description: GitHub token with contents write permission.
+    required: false
+    default: ${{ github.token }}
+  tag:
+    description: Moving nightly tag (excluded from baseline selection).
+    required: false
+    default: dev
+  title:
+    description: Nightly release title.
+    required: false
+    default: Dev Nightly
+  ref:
+    description: Commit or branch in the checkout to release.
+    required: false
+    default: HEAD
+  tag-pattern:
+    description: JavaScript regular expression matching eligible baseline tags.
+    required: false
+    default: '^v?[0-9]+(\.[0-9]+)*$'
+  base-tag:
+    description: Explicit baseline tag instead of automatic selection.
+    required: false
+    default: ''
+  since:
+    description: Optional ISO 8601 start date overriding the baseline tag date.
+    required: false
+    default: ''
+  until:
+    description: Optional ISO 8601 end date for commit notes.
+    required: false
+    default: ''
+  additional-notes:
+    description: Extra Markdown included before the commit list.
+    required: false
+    default: ''
+  additional-notes-file:
+    description: Optional Markdown file in the checked-out repository.
+    required: false
+    default: ''
+  notes-path:
+    description: Generated notes file; text outside AUTO-DEVMD markers is preserved.
+    required: false
+    default: releases/dev.md
+  body-mode:
+    description: Release body from the auto section (auto) or the whole notes file (file).
+    required: false
+    default: auto
+  recreate-release:
+    description: Delete and recreate the nightly release instead of updating it.
+    required: false
+    default: 'false'
+
+outputs:
+  base-tag:
+    description: Selected baseline tag, empty when there are no eligible tags.
+  since:
+    description: Resolved start date in UTC, empty when using the full history.
+  target-sha:
+    description: Commit targeted by the nightly tag.
+  notes-path:
+    description: Absolute path to the generated Markdown file.
+  release-url:
+    description: Published nightly release URL.
+
+runs:
+  using: node24
+  main: src/main.js

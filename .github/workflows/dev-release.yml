@@ -1,0 +1,113 @@
+name: Nightly Dev Release
+
+on:
+  workflow_call:
+    inputs:
+      tag:
+        description: Moving nightly tag.
+        type: string
+        default: dev
+      title:
+        description: Nightly release title.
+        type: string
+        default: Dev Nightly
+      ref:
+        description: Commit or branch to check out; empty uses the caller's commit.
+        type: string
+        default: ''
+      tag-pattern:
+        description: JavaScript regular expression matching eligible baseline tags.
+        type: string
+        default: '^v?[0-9]+(\.[0-9]+)*$'
+      base-tag:
+        description: Explicit baseline tag instead of automatic selection.
+        type: string
+        default: ''
+      since:
+        description: Optional ISO 8601 start date.
+        type: string
+        default: ''
+      until:
+        description: Optional ISO 8601 end date.
+        type: string
+        default: ''
+      additional-notes:
+        description: Extra Markdown included before the commit list.
+        type: string
+        default: ''
+      additional-notes-file:
+        description: Optional Markdown file in the caller's repository.
+        type: string
+        default: ''
+      notes-path:
+        description: Generated notes file.
+        type: string
+        default: releases/dev.md
+      body-mode:
+        description: Publish the auto section (auto) or entire notes file (file).
+        type: string
+        default: auto
+      recreate-release:
+        description: Delete and recreate the nightly release instead of updating it.
+        type: boolean
+        default: false
+    secrets:
+      token:
+        description: Optional token overriding the caller's automatic GitHub token.
+        required: false
+    outputs:
+      base-tag:
+        description: Selected baseline tag.
+        value: ${{ jobs.release.outputs.base-tag }}
+      since:
+        description: Resolved start date in UTC.
+        value: ${{ jobs.release.outputs.since }}
+      target-sha:
+        description: Commit targeted by the nightly tag.
+        value: ${{ jobs.release.outputs.target-sha }}
+      notes-path:
+        description: Absolute generated notes path on the release runner.
+        value: ${{ jobs.release.outputs.notes-path }}
+      release-url:
+        description: Published nightly release URL.
+        value: ${{ jobs.release.outputs.release-url }}
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    concurrency:
+      group: drelease-${{ inputs.tag }}
+      cancel-in-progress: false
+    outputs:
+      base-tag: ${{ steps.release.outputs.base-tag }}
+      since: ${{ steps.release.outputs.since }}
+      target-sha: ${{ steps.release.outputs.target-sha }}
+      notes-path: ${{ steps.release.outputs.notes-path }}
+      release-url: ${{ steps.release.outputs.release-url }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.ref || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+          token: ${{ secrets.token || github.token }}
+      - id: release
+        uses: gemc/DRelease@main
+        with:
+          mode: release
+          token: ${{ secrets.token || github.token }}
+          ref: ${{ inputs.ref || github.sha }}
+          tag: ${{ inputs.tag }}
+          title: ${{ inputs.title }}
+          tag-pattern: ${{ inputs.tag-pattern }}
+          base-tag: ${{ inputs.base-tag }}
+          since: ${{ inputs.since }}
+          until: ${{ inputs.until }}
+          additional-notes: ${{ inputs.additional-notes }}
+          additional-notes-file: ${{ inputs.additional-notes-file }}
+          notes-path: ${{ inputs.notes-path }}
+          body-mode: ${{ inputs.body-mode }}
+          recreate-release: ${{ inputs.recreate-release }}

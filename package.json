@@ -1,0 +1,17 @@
+{
+  "name": "drelease",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Publish nightly GitHub prereleases with notes since the latest version tag.",
+  "type": "commonjs",
+  "bin": {
+    "drelease": "src/cli.js"
+  },
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "check": "node --check src/main.js && node --check src/cli.js",
+    "test": "node --test"
+  }
+}
